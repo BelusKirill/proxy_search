@@ -39,20 +39,40 @@ def get_proxys(select_combo):
     element = element.find('tbody')
     elements = element.find_all('td')
 
-    index = 0
-    for item in elements:
-        if index == 0:
-            proxy.append(item.text)
-        if index == 1:
-            proxy.append(item.text)
-        if index == 3:
-            proxy.append(item.text)
-        elif index == 7:
-            proxy.append(item.text)
-            proxys.append(proxy[:])
-            proxy.clear()
-            index = -1
-        index += 1
+    if type_proxy == 'socks':
+        index = 0
+        for item in elements:
+            if index == 0:
+                proxy.append(item.text)
+            if index == 1:
+                proxy.append(item.text)
+            if index == 3:
+                proxy.append(item.text)
+            if index == 4:
+                proxy.append(item.text)
+            elif index == 7:
+                proxy.append(item.text)
+                proxys.append(proxy[:])
+                proxy.clear()
+                index = -1
+            index += 1
+    elif type_proxy == 'ssl':
+        index = 0
+        for item in elements:
+            if index == 0:
+                proxy.append(item.text)
+            if index == 1:
+                proxy.append(item.text)
+            if index == 3:
+                proxy.append(item.text)
+            if index == 6:
+                proxy.append('Https' if item.text == 'yes' else 'Http')
+            elif index == 7:
+                proxy.append(item.text)
+                proxys.append(proxy[:])
+                proxy.clear()
+                index = -1
+            index += 1
 
     return type_proxy, proxys
 
@@ -62,11 +82,23 @@ def check_one_proxy(proxy, url,headers, table):
     global countbat
     global countall
     global count_target_proxy
-    
-    proxies = {
-        'https': f'{proxy[0]}:{proxy[1]}',
-        'http': f'{proxy[0]}:{proxy[1]}',
-    }
+    proxies = {}
+
+    if (proxy[3]=='https' or proxy[3]=='http'):
+        proxies = {
+            'https': f'{proxy[0]}:{proxy[1]}',
+            'http': f'{proxy[0]}:{proxy[1]}',
+        }
+    elif (proxy[3]=='socks4'):
+        proxies = {
+            'https': f'socks4://{proxy[0]}:{proxy[1]}',
+            'http': f'socks4://{proxy[0]}:{proxy[1]}',
+        }
+    elif (proxy[3]=='socks5'):
+        proxies = {
+            'https': f'socks5://{proxy[0]}:{proxy[1]}',
+            'http': f'socks5://{proxy[0]}:{proxy[1]}',
+        }
 
     if url == '':
         url = 'https://2ip.ru/'
@@ -79,7 +111,7 @@ def check_one_proxy(proxy, url,headers, table):
             soup = bs(html, "lxml")
             temp = soup.find(id="d_clip_button").text
         #if proxy[0] == temp:
-        proxy[3] = response.elapsed.total_seconds()
+        proxy[4] = response.elapsed.total_seconds()
         data = table.get()[:]
         data.append(proxy)
         table.update(values=data)
@@ -150,8 +182,8 @@ sg.theme('DarkAmber')
 layout_column = [[sg.Text('Ссылка для проверки'), sg.InputText(key='-IN-')],
                 [sg.Table(values = [],
                           key='-TABLE-', 
-                          headings=['Id', 'Port', 'Country', 'Last Checked'],
-                          col_widths=[20, 10, 10],
+                          headings=['Id', 'Port', 'Country', 'Type', 'Last Checked'],
+                          col_widths=[20, 10, 10, 6],
                           pad=(25,25), 
                           display_row_numbers=True, 
                           auto_size_columns=False, 
@@ -159,8 +191,8 @@ layout_column = [[sg.Text('Ссылка для проверки'), sg.InputText(
 
 layout_column2 = [[sg.Table(values = [],
                 key='-TABLE2-', 
-                headings=['Id', 'Port', 'Country', 'Speed'],
-                col_widths=[20, 10, 10],
+                headings=['Id', 'Port', 'Country', 'Type', 'Speed'],
+                col_widths=[20, 10, 10, 6],
                 pad=(25,25), 
                 display_row_numbers=True, 
                 auto_size_columns=False, 
@@ -260,5 +292,5 @@ while True:
     elif event == '-BTNstop-':
         flag_get_proxy = False
 
-th.terminate()
+
 window.close()
