@@ -89,33 +89,33 @@ def check_one_proxy(proxy, url,headers, table):
             'https': f'{proxy[0]}:{proxy[1]}',
             'http': f'{proxy[0]}:{proxy[1]}',
         }
-    elif (proxy[3]=='socks4'):
+    elif (proxy[3]=='Socks4'):
         proxies = {
             'https': f'socks4://{proxy[0]}:{proxy[1]}',
             'http': f'socks4://{proxy[0]}:{proxy[1]}',
         }
-    elif (proxy[3]=='socks5'):
+    elif (proxy[3]=='Socks5'):
         proxies = {
-            'https': f'socks5://{proxy[0]}:{proxy[1]}',
-            'http': f'socks5://{proxy[0]}:{proxy[1]}',
+            'https': f'Socks5://{proxy[0]}:{proxy[1]}',
+            'http': f'Socks5://{proxy[0]}:{proxy[1]}',
         }
 
     if url == '':
-        url = 'https://2ip.ru/'
+        url = 'http://ident.me/'
 
     try:
         response = requests.get(url, proxies=proxies, headers=headers, timeout=15)
         #print(response.status_code)
         html = response.text
-        if url == 'https://2ip.ru/':
+        if url == 'http://ident.me/':
             soup = bs(html, "lxml")
-            temp = soup.find(id="d_clip_button").text
-        #if proxy[0] == temp:
-        proxy[4] = response.elapsed.total_seconds()
-        data = table.get()[:]
-        data.append(proxy)
-        table.update(values=data)
-        countgood += 1
+            temp = response.text
+        if proxy[0] == temp:
+            proxy[4] = response.elapsed.total_seconds()
+            data = table.get()[:]
+            data.append(proxy)
+            table.update(values=data)
+            countgood += 1
     except Exception as ex:
         #print(ex)
         countbat += 1
@@ -216,7 +216,7 @@ layout_tab1 = [[sg.Text('Копировать: '), sg.Button('id:port', key='-BT
         [sg.Column(layout_column, element_justification='center')]]
 
 layout_tab2 = [[sg.Text('Копировать: '), sg.Button('id:port', key='-BTNcopy2-')],
-                [sg.Text('Функции: '), sg.Button('Стоп', key='-BTNstop-')],
+                [sg.Text('Функции: '), sg.Button('Стоп', key='-BTNstop-'), sg.Button('Сортировать по скорости', key='-BTNsort-'), sg.Button('Сохранить в файл', key='-BTNsave-')],
                 [sg.Column(layout_column2, element_justification='center')]]
 
 TABGroup = [[sg.Tab('Tab 1', layout_tab1, key='-TAB1-'), 
@@ -259,6 +259,16 @@ while True:
                 pyperclip.copy(databuf)
             else:
                 continue
+    elif event == '-BTNsort-':
+        bufdata = table2.get()[:]
+        if bufdata == []: continue
+        bufdata = sorted(bufdata, key=lambda x: x[4])
+        table2.update(bufdata)
+    elif event == '-BTNsave-':
+        bufdata = table2.get()[:]
+        with open('Proxys.txt', 'w') as file:
+            for line in bufdata:
+                file.writelines(f"{line[0]}:{line[1]}\n")
     elif event == '-BTNcopy2-':
         e = table2.user_bind_event
         if e is not None:
